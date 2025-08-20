@@ -59,6 +59,18 @@ import { ref, onMounted } from 'vue';
 import employeeService from '@/services/employee.service';
 import AuthService from '@/services/auth.service';
 
+// 1. HELPER: Create a dynamic base URL for your backend API
+const getApiBaseUrl = () => {
+  // Use Vite's environment variables to detect if we are in development or production
+  if (import.meta.env.DEV) {
+    return 'http://localhost:3000'; // Your local backend URL
+  } else {
+    return 'https://hr-backend-9ci3.onrender.com'; // Your deployed backend URL
+  }
+};
+const API_BASE_URL = getApiBaseUrl();
+
+
 const passwordForm = ref(null);
 const passwords = ref({ oldPassword: '', newPassword: '' });
 const passwordLoading = ref(false);
@@ -66,15 +78,17 @@ const passwordLoading = ref(false);
 const selectedFile = ref(null);
 const uploading = ref(false);
 const profilePictureUrl = ref('');
-const defaultAvatar = 'https://randomuser.me/api/portraits/lego/1.jpg';
+
+// 2. CHANGED: Update the default avatar to your local asset
+const defaultAvatar = '/images/default-avatar.png';
 
 const snackbar = ref({ show: false, message: '', color: '' });
 
 onMounted(async () => {
     const user = AuthService.getCurrentUser();
     if (user && user.profilePictureUrl) {
-        // Construct the full URL for the image
-        profilePictureUrl.value = `http://localhost:3000${user.profilePictureUrl}`;
+        // 3. CHANGED: Use the dynamic base URL to construct the image path
+        profilePictureUrl.value = `${API_BASE_URL}${user.profilePictureUrl}`;
     }
 });
 
@@ -92,7 +106,10 @@ const uploadPicture = async () => {
     const formData = new FormData();
     formData.append('profilePicture', selectedFile.value);
     const response = await employeeService.uploadProfilePicture(formData);
-    profilePictureUrl.value = `http://localhost:3000${response.profilePictureUrl}`;
+    
+    // 4. CHANGED: Use the dynamic base URL here as well
+    profilePictureUrl.value = `${API_BASE_URL}${response.profilePictureUrl}`;
+
     showSnackbar('Profile picture updated!', 'success');
   } catch (error) {
     showSnackbar('Failed to upload picture.', 'error');

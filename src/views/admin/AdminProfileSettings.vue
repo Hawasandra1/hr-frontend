@@ -65,7 +65,9 @@ const passwordLoading = ref(false);
 const selectedFile = ref(null);
 const uploading = ref(false);
 const profilePictureUrl = ref('');
-const defaultAvatar = 'https://randomuser.me/api/portraits/men/1.jpg';
+
+// === THIS IS THE ONLY LINE THAT NEEDS TO BE CHANGED ===
+const defaultAvatar = '/images/default-avatar.png';
 
 const snackbar = ref({ show: false, message: '', color: '' });
 
