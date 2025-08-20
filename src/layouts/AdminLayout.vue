@@ -115,7 +115,10 @@ const getWebSocketUrl = () => {
 
 const router = useRouter();
 const currentUser = ref({ username: 'Guest', role: '' });
-const profilePic = ref('https://randomuser.me/api/portraits/men/1.jpg');
+
+// === THIS IS THE ONLY LINE THAT NEEDS TO BE CHANGED ===
+const profilePic = ref('/images/default-avatar.png');
+
 const notifications = ref([]);
 let socket = null;
 
@@ -132,6 +135,7 @@ onMounted(() => {
   const user = AuthService.getCurrentUser();
   if (user) {
     currentUser.value = user;
+    // This existing logic correctly overrides the default if a user has a picture
     if (user.profilePictureUrl) {
       profilePic.value = user.profilePictureUrl;
     }

@@ -75,7 +75,9 @@ import AuthService from '@/services/auth.service';
 
 const router = useRouter();
 const currentUser = ref({ firstName: 'Employee', role: '' });
-const profilePic = ref('https://randomuser.me/api/portraits/lego/1.jpg');
+
+// 1. Set the default to your new generic icon
+const profilePic = ref('/images/default-avatar.png');
 
 // Navigation items specific to the Employee role
 const navItems = ref([
@@ -87,6 +89,12 @@ onMounted(() => {
   const user = AuthService.getCurrentUser();
   if (user) {
     currentUser.value = user;
+
+    // 2. ADDED: Check if the user has a real profile picture URL.
+    // If they do, update profilePic to use it instead of the default.
+    if (user.profilePictureUrl) {
+      profilePic.value = user.profilePictureUrl;
+    }
   }
 });
 
@@ -95,7 +103,3 @@ const handleLogout = () => {
   router.push('/login');
 };
 </script>
-
-<style>
-/* ... (styles remain the same) ... */
-</style>
