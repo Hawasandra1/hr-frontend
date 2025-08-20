@@ -1,0 +1,16 @@
+/* src/assets/global.css */
+
+/* Apply the Poppins font to the entire application */
+#app {
+  font-family: 'Poppins', sans-serif;
+}
+
+/*
+ This rule targets the main container inside every page that uses your layouts.
+ It adds padding to the top to create consistent spacing between
+ the navigation bar and the page content.
+*/
+.v-main > .v-container {
+  padding-top: 32px !important;
+  padding-bottom: 32px !important;
+}
