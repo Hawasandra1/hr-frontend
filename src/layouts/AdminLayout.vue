@@ -72,7 +72,7 @@
         <template v-slot:activator="{ props }">
           <v-btn text v-bind="props" class="ml-4">
             <v-avatar size="36" class="mr-2">
-              <v-img :src="profilePic" alt="User Avatar"></v-img>
+              <v-img src="/images/default-avatar.png"></v-img>
             </v-avatar>
             <span>{{ currentUser.username }}</span>
             <v-icon right>mdi-chevron-down</v-icon>
