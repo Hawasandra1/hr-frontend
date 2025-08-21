@@ -92,7 +92,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { authService } from '@/services/auth.service';
+import { AuthService } from '@/services/auth.service';
 // Reactive data
 const form = ref(null);
 const email = ref('');
