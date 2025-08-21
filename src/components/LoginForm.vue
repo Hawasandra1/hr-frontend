@@ -69,18 +69,7 @@
               </div>
 
               <!-- Development helper -->
-              <div v-if="isDevelopment" class="mt-4 pa-3 border rounded">
-                <p class="text-caption mb-2">Development Test Credentials:</p>
-                <v-btn 
-                  size="small" 
-                  variant="outlined" 
-                  @click="fillTestCredentials"
-                  class="mr-2 mb-2"
-                >
-                  Admin Test
-                </v-btn>
-                <p class="text-caption">Email: admin@gmail.com | Password: 1234.xyz</p>
-              </div>
+            
             </v-card>
           </v-col>
         </v-row>
@@ -92,7 +81,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import  AuthService  from '@/services/auth.service';
+import AuthService from '@/services/auth.service';
 // Reactive data
 const form = ref(null);
 const email = ref('');
