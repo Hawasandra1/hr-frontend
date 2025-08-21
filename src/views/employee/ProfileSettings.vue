@@ -56,20 +56,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import employeeService from '@/services/employee.service';
 import AuthService from '@/services/auth.service';
-
-// 1. HELPER: Create a dynamic base URL for your backend API
-const getApiBaseUrl = () => {
-  // Use Vite's environment variables to detect if we are in development or production
-  if (import.meta.env.DEV) {
-    return 'http://localhost:3000'; // Your local backend URL
-  } else {
-    return 'https://hr-backend-9ci3.onrender.com'; // Your deployed backend URL
-  }
-};
-const API_BASE_URL = getApiBaseUrl();
-
 
 const passwordForm = ref(null);
 const passwords = ref({ oldPassword: '', newPassword: '' });
@@ -78,65 +65,73 @@ const passwordLoading = ref(false);
 const selectedFile = ref(null);
 const uploading = ref(false);
 const profilePictureUrl = ref('');
-
-// 2. CHANGED: Update the default avatar to your local asset
 const defaultAvatar = '/images/default-avatar.png';
-
 const snackbar = ref({ show: false, message: '', color: '' });
+const currentUser = ref(null); // <-- Add a ref for the current user
 
-onMounted(async () => {
+onMounted(() => {
     const user = AuthService.getCurrentUser();
+    currentUser.value = user; // <-- Store the user object
     if (user && user.profilePictureUrl) {
-        // 3. CHANGED: Use the dynamic base URL to construct the image path
-        profilePictureUrl.value = `${API_BASE_URL}${user.profilePictureUrl}`;
+        profilePictureUrl.value = user.profilePictureUrl;
     }
 });
 
 const onFileChange = (event) => {
-  selectedFile.value = event.target.files[0];
+    selectedFile.value = event.target.files[0];
 };
 
+// UPDATED to be role-aware
 const uploadPicture = async () => {
-  if (!selectedFile.value) {
-    showSnackbar('Please select a file first.', 'warning');
-    return;
-  }
-  uploading.value = true;
-  try {
-    const formData = new FormData();
-    formData.append('profilePicture', selectedFile.value);
-    const response = await employeeService.uploadProfilePicture(formData);
-    
-    // 4. CHANGED: Use the dynamic base URL here as well
-    profilePictureUrl.value = `${API_BASE_URL}${response.profilePictureUrl}`;
+    if (!selectedFile.value) {
+        showSnackbar('Please select a file first.', 'warning');
+        return;
+    }
+    uploading.value = true;
+    try {
+        const formData = new FormData();
+        formData.append('profilePicture', selectedFile.value);
 
-    showSnackbar('Profile picture updated!', 'success');
-  } catch (error) {
-    showSnackbar('Failed to upload picture.', 'error');
-  } finally {
-    uploading.value = false;
-  }
+        let response;
+        if (currentUser.value?.role === 'Employee') {
+            response = await AuthService.uploadEmployeeProfilePicture(formData);
+        } else {
+            response = await AuthService.uploadUserProfilePicture(formData); // For Admins/HR
+        }
+        
+        profilePictureUrl.value = response.profilePicture; // Use the direct field from backend
+        showSnackbar('Profile picture updated!', 'success');
+    } catch (error) {
+        showSnackbar('Failed to upload picture.', 'error');
+    } finally {
+        uploading.value = false;
+    }
 };
 
+// UPDATED to be role-aware
 const handleChangePassword = async () => {
-  const { valid } = await passwordForm.value.validate();
-  if (!valid) return;
+    const { valid } = await passwordForm.value.validate();
+    if (!valid) return;
 
-  passwordLoading.value = true;
-  try {
-    await employeeService.changePassword(passwords.value);
-    showSnackbar('Password changed successfully!', 'success');
-    passwordForm.value.reset();
-  } catch (error) {
-    showSnackbar(error.response?.data?.message || 'Failed to change password.', 'error');
-  } finally {
-    passwordLoading.value = false;
-  }
+    passwordLoading.value = true;
+    try {
+        if (currentUser.value?.role === 'Employee') {
+            await AuthService.changeEmployeePassword(passwords.value);
+        } else {
+            await AuthService.changeUserPassword(passwords.value); // For Admins/HR
+        }
+        showSnackbar('Password changed successfully!', 'success');
+        passwordForm.value.reset();
+    } catch (error) {
+        showSnackbar(error.response?.data?.message || 'Failed to change password.', 'error');
+    } finally {
+        passwordLoading.value = false;
+    }
 };
 
 function showSnackbar(message, color) {
-  snackbar.value.message = message;
-  snackbar.value.color = color;
-  snackbar.value.show = true;
+    snackbar.value.message = message;
+    snackbar.value.color = color;
+    snackbar.value.show = true;
 }
 </script>

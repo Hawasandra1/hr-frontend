@@ -1,39 +1,40 @@
 import api from './api.js';
 
 class AuthService {
-    // Login method
-    async login(userData) {
-        try {
-            console.log('Attempting login for:', userData.email);
-            
-            const response = await api.post('/auth/login', userData);
-            
-            if (response.data && response.data.token && response.data.user) {
-                // Store user data in localStorage
-                localStorage.setItem('user', JSON.stringify(response.data));
-                
-                console.log('Login successful:', response.data.user.email, 'Role:', response.data.user.role);
-                return response.data;
-            } else {
-                throw new Error('Invalid response format from server');
-            }
-        } catch (error) {
-            console.error('Login error:', error);
-            
-            // Clear any existing auth data on login failure
-            this.logout();
-            
-            // Re-throw with better error message
-            if (error.response?.data?.message) {
-                throw error; // Let the component handle the server message
-            } else if (error.code === 'NETWORK_ERROR' || !error.response) {
-                throw new Error('Network error - please check your connection and try again');
-            } else {
-                throw new Error('Login failed - please try again');
-            }
-        }
+    // ... (your existing login, register, etc. methods)
+
+    // ADD THIS NEW METHOD FOR EMPLOYEES
+    async changeEmployeePassword(passwordData) {
+        return api.put('/employees/my-profile/change-password', passwordData);
     }
 
+    // ADD THIS NEW METHOD FOR EMPLOYEES
+    async uploadEmployeeProfilePicture(formData) {
+        const response = await api.post('/employees/my-profile/upload-picture', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        // Update user in local storage
+        if (response.data.profilePicture) {
+            this.updateUserProfile({ profilePictureUrl: response.data.profilePicture });
+        }
+        return response.data;
+    }
+    
+    // This existing method is for Admins, we will leave it as is
+    async changeUserPassword(passwordData) {
+        return api.put('/users/my-profile/change-password', passwordData); // Assuming this is your admin route
+    }
+    
+    // This existing method is for Admins
+    async uploadUserProfilePicture(formData) {
+        const response = await api.post('/users/my-profile/upload-picture', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        if (response.data.profilePicture) {
+            this.updateUserProfile({ profilePictureUrl: response.data.profilePicture });
+        }
+        return response.data;
+    }
     // FIXED: Enhanced register method with better validation and error handling
     async register(userData) {
         try {
