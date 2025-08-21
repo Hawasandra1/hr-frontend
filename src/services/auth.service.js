@@ -239,24 +239,43 @@ class AuthService {
     }
 
     // Get profile method for API calls
-    async getProfile() {
-        try {
-            const response = await api.get('/auth/me');
-            
-            // Update localStorage with fresh user data
-            const userStr = localStorage.getItem('user');
-            if (userStr) {
-                const userData = JSON.parse(userStr);
-                userData.user = response.data.user;
-                localStorage.setItem('user', JSON.stringify(userData));
-            }
-            
-            return response.data;
-        } catch (error) {
-            console.error('Get profile error:', error);
-            throw error;
+  async getProfile() {
+    try {
+        const userRole = this.getUserRole(); // Use your existing helper to get the role
+
+        let response;
+
+        // Check the user's role and call the correct endpoint
+        if (userRole === 'Employee') {
+            console.log('Fetching profile from EMPLOYEE endpoint...');
+            response = await api.get('/employees/my-profile');
+        } else if (userRole === 'Admin' || userRole === 'HR' || userRole === 'Manager') {
+            console.log('Fetching profile from ADMIN endpoint...');
+            // NOTE: Use the correct route for an admin fetching their own profile.
+            // Based on your router, you may need to create this route, e.g., in userRoutes.js
+            // Let's assume the route is '/users/my-profile' for now.
+            response = await api.get('/users/my-profile'); 
+        } else {
+            // If there's no role or an unknown role, throw an error.
+            throw new Error('Cannot fetch profile: Unknown user role.');
         }
+        
+        // The rest of the logic to update localStorage remains the same and is great.
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            const userData = JSON.parse(userStr);
+            // The key in the response is 'user' for both endpoints.
+            userData.user = response.data.user; 
+            localStorage.setItem('user', JSON.stringify(userData));
+        }
+        
+        return response.data;
+
+    } catch (error) {
+        console.error('Get profile error:', error);
+        throw error;
     }
+}
 }
 
 export default new AuthService();
