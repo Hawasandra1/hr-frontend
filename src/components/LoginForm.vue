@@ -1,4 +1,3 @@
-
 <template>
   <v-app>
     <v-main class="gradient-background d-flex align-center justify-center">
@@ -93,8 +92,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import AuthService from '@/services/auth.service';
-
+import { authService } from '@/services/auth.service';
 // Reactive data
 const form = ref(null);
 const email = ref('');
