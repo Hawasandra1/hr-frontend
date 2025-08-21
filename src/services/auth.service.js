@@ -33,35 +33,102 @@ class AuthService {
             }
         }
     }
- async registerAdmin(userData) {
-      try {
-        console.log('Attempting to register admin user:', userData.email);
-        // This calls the specific backend route for creating users as an admin
-        const response = await api.post('/auth/register-admin', userData);
-        console.log('Admin user registration successful:', response.data);
-        return response.data;
-      } catch (error) {
-        console.error('Admin registration error:', error);
-        throw error; // Re-throw the error so the component can display a message
-      }
-    }
-    // Register method
+
+    // FIXED: Enhanced register method with better validation and error handling
     async register(userData) {
         try {
-            console.log('Attempting registration for:', userData.email);
+            // FIXED: Validate required fields before sending (matching Employee model)
+            const requiredFields = ['firstName', 'lastName', 'email', 'password'];
+            const missingFields = requiredFields.filter(field => !userData[field] || userData[field].trim() === '');
             
-            const response = await api.post('/auth/register', userData);
+            if (missingFields.length > 0) {
+                throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+            }
+
+            // FIXED: Prepare clean data object (matching Employee model - NO username field)
+            const registrationData = {
+                firstName: userData.firstName.trim(),
+                lastName: userData.lastName.trim(),
+                email: userData.email.trim().toLowerCase(),
+                password: userData.password,
+                position: userData.position || 'Employee', // Required field with default
+                role: userData.role || 'Employee' // Default role
+            };
+
+            console.log('Attempting registration for:', registrationData.email);
+            console.log('Registration payload:', {
+                firstName: registrationData.firstName,
+                lastName: registrationData.lastName,
+                email: registrationData.email,
+                position: registrationData.position,
+                role: registrationData.role,
+                hasPassword: !!registrationData.password
+            });
             
-            if (response.data && response.data.token && response.data.user) {
-                // Automatically log in after successful registration
-                localStorage.setItem('user', JSON.stringify(response.data));
-                console.log('Registration and login successful:', response.data.user.email);
-                return response.data;
+            const response = await api.post('/auth/register', registrationData);
+            
+            console.log('Registration API response:', response.data);
+
+            // FIXED: Handle different response formats from backend
+            if (response.data) {
+                // If backend returns token and user, auto-login
+                if (response.data.token && response.data.user) {
+                    localStorage.setItem('user', JSON.stringify(response.data));
+                    console.log('Registration and auto-login successful:', response.data.user.email);
+                    return response.data;
+                }
+                // If backend just confirms registration without auto-login
+                else if (response.data.message || response.data.success) {
+                    console.log('Registration successful, manual login required');
+                    return response.data;
+                }
+                // Generic success response
+                else {
+                    console.log('Registration completed successfully');
+                    return response.data;
+                }
             } else {
                 throw new Error('Invalid response format from server');
             }
         } catch (error) {
             console.error('Registration error:', error);
+            
+            // FIXED: Better error handling with specific messages
+            if (error.response?.status === 400) {
+                const errorMessage = error.response.data?.message || 'Registration failed - please check your information';
+                throw new Error(errorMessage);
+            } else if (error.response?.status === 409) {
+                throw new Error('Email or username already exists. Please try different credentials.');
+            } else if (error.response?.status === 500) {
+                throw new Error('Server error - please try again later');
+            } else if (error.code === 'ECONNABORTED') {
+                throw new Error('Request timeout - please check your connection and try again');
+            } else if (!error.response) {
+                throw new Error('Network error - unable to reach server. Please try again.');
+            } else {
+                throw error;
+            }
+        }
+    }
+
+    // FIXED: Enhanced registerAdmin method
+    async registerAdmin(userData) {
+        try {
+            console.log('Attempting to register admin user:', userData.email);
+            
+            // Validate required fields
+            const requiredFields = ['firstName', 'lastName', 'email', 'password', 'role'];
+            const missingFields = requiredFields.filter(field => !userData[field]);
+            
+            if (missingFields.length > 0) {
+                throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+            }
+
+            const response = await api.post('/auth/register-admin', userData);
+            console.log('Admin user registration successful:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('Admin registration error:', error);
             throw error;
         }
     }
@@ -75,10 +142,8 @@ class AuthService {
         this._currentUser = null;
         
         // Optional: Make API call to invalidate token on server
-        // Note: Only do this if your backend supports token invalidation
         try {
             api.post('/auth/logout').catch(() => {
-                // Ignore errors for logout API call
                 console.log('Logout API call failed (this is okay)');
             });
         } catch (error) {
@@ -96,7 +161,6 @@ class AuthService {
             }
         } catch (error) {
             console.error('Error parsing user data:', error);
-            // Clean up corrupted data
             localStorage.removeItem('user');
         }
         return null;
