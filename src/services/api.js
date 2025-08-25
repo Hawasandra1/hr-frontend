@@ -10,7 +10,7 @@ const getApiBaseUrl = () => {
     
     // Fallback based on environment
     if (import.meta.env.DEV) {
-        return 'http://localhost:3000/api';
+        return 'http://localhost:10000/api';
     }
     
     // Production fallback
