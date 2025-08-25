@@ -113,27 +113,35 @@ class AuthService {
     }
 
     // FIXED: Enhanced registerAdmin method
-    async registerAdmin(userData) {
-        try {
-            console.log('Attempting to register admin user:', userData.email);
-            
-            // Validate required fields
-            const requiredFields = ['firstName', 'lastName', 'email', 'password', 'role'];
-            const missingFields = requiredFields.filter(field => !userData[field]);
-            
-            if (missingFields.length > 0) {
-                throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
-            }
+  async registerAdmin(userData) {
+    try {
+        console.log('Attempting to register admin user:', userData.email);
+        
+        // FIXED: Update validation for User table structure (username, not firstName/lastName)
+        const requiredFields = ['username', 'email', 'password', 'role'];
+        const missingFields = requiredFields.filter(field => !userData[field]);
+        
+        if (missingFields.length > 0) {
+            throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+        }
 
-            const response = await api.post('/auth/register-admin', userData);
-            console.log('Admin user registration successful:', response.data);
-            return response.data;
-        } catch (error) {
-            console.error('Admin registration error:', error);
-            throw error;
-        }
-    }
+        // Prepare data for User table structure
+        const adminData = {
+            username: userData.username,
+            email: userData.email.trim().toLowerCase(),
+            password: userData.password,
+            role: userData.role,
+            departmentId: userData.departmentId || null // Optional field
+        };
 
+        const response = await api.post('/auth/register-admin', adminData);
+        console.log('Admin user registration successful:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('Admin registration error:', error);
+        throw error;
+    }
+}
     // Logout method
     logout() {
         console.log('Logging out user');
