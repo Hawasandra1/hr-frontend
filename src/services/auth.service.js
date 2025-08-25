@@ -277,6 +277,60 @@ class AuthService {
         throw error;
     }
 }
+// Add this login method to your AuthService class
+
+async login(userData) {
+    try {
+        console.log('Attempting login for:', userData.email);
+        
+        // Validate required fields
+        if (!userData.email || !userData.password) {
+            throw new Error('Email and password are required');
+        }
+
+        // Prepare login data
+        const loginData = {
+            email: userData.email.trim().toLowerCase(),
+            password: userData.password
+        };
+
+        console.log('Login payload:', { email: loginData.email, hasPassword: !!loginData.password });
+        
+        const response = await api.post('/auth/login', loginData);
+        
+        console.log('Login API response received:', response.data);
+
+        if (response.data && response.data.token && response.data.user) {
+            // Store user data and token in localStorage
+            localStorage.setItem('user', JSON.stringify(response.data));
+            
+            console.log('Login successful for user:', response.data.user.email, 'Role:', response.data.user.role);
+            return response.data;
+        } else {
+            throw new Error('Invalid response format from server');
+        }
+        
+    } catch (error) {
+        console.error('Login error:', error);
+        
+        // Handle different types of errors
+        if (error.response?.status === 401) {
+            throw new Error('Invalid email or password');
+        } else if (error.response?.status === 404) {
+            throw new Error('User not found');
+        } else if (error.response?.status === 500) {
+            throw new Error('Server error - please try again later');
+        } else if (error.code === 'ECONNABORTED') {
+            throw new Error('Request timeout - please check your connection');
+        } else if (!error.response) {
+            throw new Error('Network error - unable to reach server');
+        } else if (error.response?.data?.message) {
+            throw new Error(error.response.data.message);
+        } else {
+            throw error;
+        }
+    }
+}
 }
 
 export default new AuthService();
